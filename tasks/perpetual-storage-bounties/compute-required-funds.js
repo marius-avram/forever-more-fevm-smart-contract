@@ -3,27 +3,25 @@ const util = require("util");
 const request = util.promisify(require("request"));
 
 task(
-    "add-bounty",
-    "Adds a CID (should be a piece ID) of data that you would like to put a storage bounty on."
+    "compute-required-funds",
+    "Compute required-funds for a bounty"
   )
     .addParam("contract", "The address of the PerpetualStorageBounties contract")
-    .addParam("requester", "The requester account")
-    .addParam("cid", "The piece CID of the data you want to put up a bounty for")
-    .addParam("size", "Size of the data you are putting a bounty on")
     .addParam("replicas", "Number of replicas for the data")
     .addParam("period", "Duration of each lease in days")
     .setAction(async (taskArgs) => {
         const contractAddr = taskArgs.contract
         const account = taskArgs.account
         const networkId = network.name
-        console.log("Adding CID as a bounty", networkId)
+        console.log("Compute required funds for bounty", networkId)
         const PerpetualStorageBounties = await ethers.getContractFactory("PerpetualStorageBounties")
   
         //Get signer information
         const accounts = await ethers.getSigners()
         const signer = accounts[0]
 
-        const priorityFee = await callRpc("eth_maxPriorityFeePerGas")
+        const priorityFee = await callRpc("eth_maxPriorityFeePerGas");
+        console.log("priorityFee " + priorityFee);
 
     async function callRpc(method, params) {
         var options = {
@@ -45,22 +43,17 @@ task(
       }
 
         
-        const perpetualStorage = new ethers.Contract(contractAddr, PerpetualStorageBounties.interface, signer);
-        const requester = taskArgs.requester;
-        const cid = taskArgs.cid;
-        const size = taskArgs.size;
+        const perpetualStorage = new ethers.Contract(contractAddr, PerpetualStorageBounties.interface, signer)
         const replicas = taskArgs.replicas;
         const period = taskArgs.period;
-        const cidHexRaw = new CID(cid).toString('base16').substring(1);
-        const cidHex = "0x00" + cidHexRaw;
-        console.log("Bytes are:", cidHex)
 
-        await perpetualStorage.addBounty(requester, cidHex, cid, size, replicas, period, {
+        requiredFunds = await perpetualStorage.computeRequiredFunds( replicas, period, {
             gasLimit: 1000000000,
             maxPriorityFeePerGas: priorityFee
-        })
+        });
+        let result = BigInt(requiredFunds);
+        console.log("Required funds " + result);
 
-        console.log("Complete! Please wait about a minute before reading state!" )
     })
 
   module.exports = {}

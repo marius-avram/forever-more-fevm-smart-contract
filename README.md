@@ -1,26 +1,69 @@
-# FEVM Hardhat Kit
+# ForeverMore smart contract
 
-## Cloning the Repo
+## Summary
 
-Open up your terminal (or command prompt) and navigate to a directory you would like to store this code on. Once there type in the following command:
+A Solidity FEVM smart contract that can be used as a starting point for a DAO operating on the Filecoin network.
+The objective of the smart contract is to manage the deals between two actors:
+- simple users of the network, that want to store some files
+- service providers that offer up their space in exchange of currency
 
+At the same time the contract aims to allow its users the option to store in a convenient way files, that are replicated over the network at any point in time. While for the storage providers it aims to provide a steady source of income from new storage bounties.
+
+In current verion the basic user can create a storage deal offer/bounty for a file based on its CID. For each bounty he can
+select:
+- the desired amount of replicas that he wants to achive on the filecoin network
+- the minimum storage period desired for each replica
+
+Once the storage period for a replica has passed/expired it will try to make a new replica in the network for the same storage period that was first defined at the creation of the bounty. That will happen only if there are storage providers on the network willing to still take up the offer, and if the user that initiated the storage bounty has enough funds deposited in the contract.
+
+This project has been developed as part of the [Spacewarp Virtual Hackaton 2023](https://ethglobal.com/events/spacewarp) and it was deployed on the Filecoint Hyperspace testnet.
+
+## Usage scenarios
+
+A typical usage scenario of the contract will look like this (involving the two actors mentioned earlier):
+
+- User1 wants to create a bounty for storing a file:
+  - calls the contract to find out the amount of FIL he needs to pre-deposit to allow the creation of the bounty (based on the number of replicas, size and basic storage period)
+  - deposits the amount of FIL specified by the contract
+  - creates the file bounty, if the pre-deposit was not made the bounty will fail creation
+
+- The Service Provider:
+  - will get a list with the available bounties that don't have the replica expectation met.
+  - selects one of the bounties it wants to complete
+  - does the storage deal for the specified period of time in the bounty (outside the contract)
+  - specifies the deal id for the bounty selected and if CID from the deal matches the one from the bounty he will get paid with the price of one replica.
+
+## Smart contract
+
+The smart contract can be found at `contracts/perpetual-storage-bounties/PerpetualStorageBounties.sol`.
+It was deployed on the hyperspace testnet at adress: `0x0aA7309C29a937dDf81E0E0aF8175d43519be9ef`.
+
+It makes use of [Zondax MarketAPI library](https://github.com/Zondax/filecoin-solidity).
+
+## Further developments
+- Right now the way bounties are filled is by manual interaction with the dapp frontend. This could be automated by a script that checks existing deals and finds out if they match existing offers. If this becomes too computational intensive an option would be for service providers to have their address registered in the contract and check only for the deals that are created by those addresses.
+- Only the account of the service provider that made the deal (outside the contract) should be able to claim bounties. This way there won't be ways for uninvolved actors in the whole process to fill bounty offers and get paid.
+- Automated renewal of expired replicas, which are past their storage period.
+- A function that retrives the amount required to pre-fund in case created replicas will expire soon (14 days) and the user doesn't have any more funds left in the contract. This could be attached to a cron job that notifies the user about the possiblity of data loss if they don't continue to add funds.
+
+
+
+
+## Developement and local testing
+
+The project is based on the [fevm-hardhad-kit] (https://github.com/filecoin-project/fevm-hardhat-kit.git)
+
+To run, execute the following steps:
+
+### Cloning
 
 ```
-git clone https://github.com/filecoin-project/fevm-hardhat-kit.git
+git clone https://github.com/marius-avram/forever-more-fevm-smart-contract
 cd fevm-hardhat-kit
 yarn install
 ```
 
-
-This will clone the hardhat kit onto your computer, switch directories into the newly installed kit, and install the dependencies the kit needs to work.
-
-
-## Get a Private Key
-
-You can get a private key from a wallet provider [such as Metamask](https://metamask.zendesk.com/hc/en-us/articles/360015289632-How-to-export-an-account-s-private-key).
-
-
-## Add your Private Key as an Environment Variable
+### Add private key
 
 Add your private key as an environment variable by running this command:
 
@@ -31,7 +74,7 @@ export PRIVATE_KEY='abcdef'
 If you use a .env file, don't commit and push any changes to .env files that may contain sensitive information, such as a private key! If this information reaches a public GitHub repository, someone can use it to check if you have any Mainnet funds in that wallet address, and steal them!
 
 
-## Get the Deployer Address
+### Get the Deployer Address
 
 Run this command:
 ```
@@ -41,55 +84,30 @@ yarn hardhat get-address
 The will show you the ethereum-style address associated with that private key and the filecoin-style f4 address (also known as t4 address on testnets)! The Ethereum address can now be exclusively used for almost all FEVM tools, including the faucet.
 
 
-## Fund the Deployer Address
+### Fund the Deployer Address
 
 Go to the [Hyperspace testnet faucet](https://hyperspace.yoga/#faucet), and paste in the Ethereum address from the previous step. This will send some hyperspace testnet FIL to the account.
 
 
-## Deploy the Contracts
+### Deploy the Contract
 
-Currently there are 2 main types of contracts:
-
-* Basic Solidity Examples: Simple contracts to show off basic solidity
-
-* Filecoin API Examples: Contracts that demo how to use the Filecoin APIs in Solidity to access storage deals and other Filecoin specific functions.
-
-
-Type in the following command in the terminal to deploy all contracts:
+Run: 
 
  ```
 yarn hardhat deploy
 ```
 
-This will compile all the contracts in the contracts folder and deploy them to the Hyperspace test network automatically!
 
-Keep note of the deployed contract addresses for the next step.
+### Interact with the Contracts
 
-## Interact with the Contracts
-
-You can interact with contracts via hardhat tasks, found in the 'tasks' folder. For example, to interact with the SimpleCoin contract:
-
-Type in the following command in the terminal:
+You can interact with contracts via hardhat tasks, found in the 'tasks' folder. More specifically for the PerpetualStorageBounties contract type in the following command in the terminal:
 
  ```
-yarn hardhat get-balance --contract 'THE DEPLOYED CONTRACT ADDRESS HERE' --account 'YOUR ETHEREUM ADDRESS HERE'
+ yarn hardhat add-bounty --contract  'THE DEPLOYED CONTRACT ADDRESS HERE' --cid 'CID' --size 'FILE_SIZE' --replicas 'DESIRED_REPLICAS' --period 'STORAGE_PERIOD_PER_REPLICA'
 ```
 
 The console should read that your account has 12000 SimpleCoin!
 
-## Filecoin APIs
+# Known problems
 
-The primary advantage of the FEVM over other EVM based chains is the ability to access and program around Filecoin storage deals. This can be done in the FEVM via the [Filecoin.sol library maintained by Zondax](https://github.com/Zondax/filecoin-solidity). **Note this library is currently in BETA**. It is unaudited, and the APIs will likely be changing with time. This repo will be updated as soon as possible when a breaking change occurs.
-
-The library is included in this kit as an NPM package and will automatically be downloaded when you perform the `yarn` command (don't confuse these with the included mocks)!
-
-Currently you will find a getter contract that calls the getter methods on the MarketAPI to get storage deal data and store that data. To do this you will need *dealIDs* which you can [find here on FilFox](https://hyperspace.filfox.info/en/deal).
-
-As an example to store most of the data available for a deal run the store-all command with a specified dealID. Below is an example of using this command below with the a deal on Hyperspace testnet with a dealID of 707.
-
-```
-yarn hardhat store-all --contract "DEPLOYED FILECOIN_MARKET_CONSUMER CONTRACT ADDRESS HERE" --dealid "707"
-```
-### Bounty Contract
-
-Under contracts, within the `filecoin-api-examples` sub-directory, you will find a file called `deal-rewarder.sol`. This is a basic example contract that uses the Filecoin.sol API's to create bounties for specific data to be stored on the Filecoin blockchain. To learn more about this contract feel free to [checkout the original Foundry project](https://github.com/lotus-web3/deal-bounty-contract) which includes a detailed readme.
+- There are still some bugs in the claimBounty function as the limited time available for the hackaton did not permit enough debugging. 

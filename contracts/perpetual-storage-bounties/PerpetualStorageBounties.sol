@@ -145,7 +145,7 @@ contract PerpetualStorageBounties {
     }
 
     function computeDealDurationDays(int64 start, int64 end) internal returns (int64) {
-        /* 
+        /*
           Compute the duration in days between epochsStart and epochEnd in a deal.
           Assuming the duration of an epoch is 30 seconds on the FILECOIN network.
         */
@@ -200,7 +200,7 @@ contract PerpetualStorageBounties {
       bounties[bountyId].storedReplicas = deals[bountyId].length;
     }
 
-    /* Public function to claim a bounty for an existing bountId, given a dealId */
+    /* Public function to claim a bounty for an existing bountyId, given a dealId */
     function claimBounty(bytes32 bountyId, uint64 dealId) public {
         MarketTypes.GetDealDataCommitmentReturn memory commitmentRet = MarketAPI.getDealDataCommitment(MarketTypes.GetDealDataCommitmentParams({id: dealId}));
         MarketTypes.GetDealProviderReturn memory providerRet = MarketAPI.getDealProvider(MarketTypes.GetDealProviderParams({id: dealId}));

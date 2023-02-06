@@ -41,6 +41,7 @@ It was deployed on the hyperspace testnet at adress: `0x0aA7309C29a937dDf81E0E0a
 It makes use of [Zondax MarketAPI library](https://github.com/Zondax/filecoin-solidity).
 
 ## Further developments
+- Using files or file URLs istead of CIDs outside the contract. It will greatly ease user interaction. Under the hood the application should compute the CID derived from a file using a lotus node.
 - Right now the way bounties are filled is by manual interaction with the dapp frontend. This could be automated by a script that checks existing deals and finds out if they match existing offers. If this becomes too computational intensive an option would be for service providers to have their address registered in the contract and check only for the deals that are created by those addresses.
 - Only the account of the service provider that made the deal (outside the contract) should be able to claim bounties. This way there won't be ways for uninvolved actors in the whole process to fill bounty offers and get paid.
 - Automated renewal of expired replicas, which are past their storage period.

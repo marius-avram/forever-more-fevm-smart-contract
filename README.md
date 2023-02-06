@@ -2,7 +2,7 @@
 
 ## Summary
 
-A Solidity FEVM smart contract that can be used as a starting point for a DAO operating on the Filecoin network.
+This repository contains a solidity FEVM smart contract that can be used as a starting point for a DAO operating on the Filecoin network.
 The objective of the smart contract is to manage the deals between two actors:
 - simple users of the network, that want to store some files
 - service providers that offer up their space in exchange of currency
